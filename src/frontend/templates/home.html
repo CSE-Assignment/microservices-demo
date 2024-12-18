@@ -37,6 +37,18 @@
 
       <div class="col-12 col-lg-12 px-10-percent">
 
+        <div class="row banner-section mb-4">
+          <div class="col-12 text-center">
+            <div class="banner">
+              <h1 class="banner-title">{{ .banner_title }}</h1>
+              <p class="banner-description">{{ .banner_description }}</p>
+              {{ if .banner_image }}
+              <img class="banner-image" src="data:image/{{ .banner_image_format }};base64,{{ .banner_image }}" alt="Banner Image">
+              {{ end }}
+            </div>
+          </div>
+        </div>
+
         <div class="row hot-products-row px-xl-6">
 
           <div class="col-12">

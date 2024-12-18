@@ -17,6 +17,7 @@ package main
 import (
 	"context"
 	"encoding/json"
+	"encoding/base64"
 	"fmt"
 	"html/template"
 	"io"
@@ -79,7 +80,7 @@ func (fe *frontendServer) homeHandler(w http.ResponseWriter, r *http.Request) {
 		renderHTTPError(log, r, w, errors.Wrap(err, "could not retrieve current banner"), http.StatusInternalServerError)
 		return
 	}
-	log.Infof("Banner title received: %s", bannerResp.GetTitle())
+	log.Infof("************************* Banner received. Titel: %s", bannerResp.GetTitle())
 
 	type productView struct {
 		Item  *pb.Product
@@ -114,12 +115,16 @@ func (fe *frontendServer) homeHandler(w http.ResponseWriter, r *http.Request) {
 	plat.setPlatformDetails(strings.ToLower(env))
 
 	if err := templates.ExecuteTemplate(w, "home", injectCommonTemplateData(r, map[string]interface{}{
-		"show_currency": true,
-		"currencies":    currencies,
-		"products":      ps,
-		"cart_size":     cartSize(cart),
-		"banner_color":  os.Getenv("BANNER_COLOR"), // illustrates canary deployments
-		"ad":            fe.chooseAd(r.Context(), []string{}, log),
+		"show_currency":       true,
+		"currencies":          currencies,
+		"products":            ps,
+		"cart_size":           cartSize(cart),
+		"banner_color":        os.Getenv("BANNER_COLOR"), // illustrates canary deployments
+		"ad":                  fe.chooseAd(r.Context(), []string{}, log),
+		"banner_title":        bannerResp.GetTitle(),
+		"banner_description":  bannerResp.GetDescription(),
+		"banner_image":        base64.StdEncoding.EncodeToString(bannerResp.GetImage()), // Base64 encode the image
+		"banner_image_format": bannerResp.GetImageFormat(),
 	})); err != nil {
 		log.Error(err)
 	}
