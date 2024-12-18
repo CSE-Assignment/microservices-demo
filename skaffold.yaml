@@ -46,10 +46,10 @@ build:
     context: src/frontend
   - image: adservice
     context: src/adservice
-  # - image: bannerservice
-  #   context: src/bannerservice
-  #   docker:
-  #     dockerfile: Dockerfile
+   - image: bannerservice
+     context: src/bannerservice
+     docker:
+       dockerfile: Dockerfile
   tagPolicy:
     gitCommit: {}
   local:
@@ -58,8 +58,8 @@ manifests:
   kustomize:
     paths:
     - kubernetes-manifests
-  # rawYaml:
-  # - ./kubernetes-manifests/bannerservice.yaml
+   rawYaml:
+   - ./kubernetes-manifests/bannerservice.yaml
 deploy:
   kubectl: {}
 # "gcb" profile allows building and pushing the images
