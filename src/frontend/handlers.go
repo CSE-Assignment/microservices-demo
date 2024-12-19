@@ -556,6 +556,27 @@ func (fe *frontendServer) setCountryHandler(w http.ResponseWriter, r *http.Reque
             MaxAge: cookieMaxAge,
         })
     }
+
+	// Fetch the banner for the selected country
+    bannerResp, err := fe.getCurrentBanner(r.Context(), payload.Country)
+    if err != nil {
+        renderHTTPError(log, r, w, errors.Wrap(err, "could not retrieve current banner"), http.StatusInternalServerError)
+        return
+    }
+
+    log.Infof("Banner fetched for country %s: %s", payload.Country, bannerResp.GetTitle())
+
+    // Inject the banner and other data into the response
+    if err := templates.ExecuteTemplate(w, "banner", injectCommonTemplateData(r, map[string]interface{}{
+        "banner_title":        bannerResp.GetTitle(),
+        "banner_description":  bannerResp.GetDescription(),
+        "banner_image":        base64.StdEncoding.EncodeToString(bannerResp.GetImage()),
+        "banner_image_format": bannerResp.GetImageFormat(),
+        "user_country":        payload.Country, // Update the template with the current country
+    })); err != nil {
+        log.Error(err)
+    }
+
     referer := r.Header.Get("referer")
     if referer == "" {
         referer = baseUrl + "/"
