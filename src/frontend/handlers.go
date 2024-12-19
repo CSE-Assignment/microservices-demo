@@ -75,7 +75,7 @@ func (fe *frontendServer) homeHandler(w http.ResponseWriter, r *http.Request) {
 		renderHTTPError(log, r, w, errors.Wrap(err, "could not retrieve cart"), http.StatusInternalServerError)
 		return
 	}
-	bannerResp, err := fe.getCurrentBanner(r.Context(), "DE")
+	bannerResp, err := fe.getCurrentBanner(r.Context(), currentCountry(r))
 	if err != nil {
 		renderHTTPError(log, r, w, errors.Wrap(err, "could not retrieve current banner"), http.StatusInternalServerError)
 		return
