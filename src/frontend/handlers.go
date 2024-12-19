@@ -625,7 +625,7 @@ func injectCommonTemplateData(r *http.Request, payload map[string]interface{}) m
 		"frontendMessage":   frontendMessage,
 		"currentYear":       time.Now().Year(),
 		"baseUrl":           baseUrl,
-		"countries":         []string{"US", "DE", "FR", "GB", "JP"},
+		"countries":         []string{"CA", "DE", "FR", "GB", "JP", "US"},
 	}
 
 	for k, v := range payload {
