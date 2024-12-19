@@ -56,6 +56,10 @@ type SetCurrencyPayload struct {
 	Currency string `validate:"required,iso4217"`
 }
 
+type SetCountryPayload struct {
+    Country string `validate:"required,iso3166_1_alpha2"`
+}
+
 // Implementations of the 'Payload' interface.
 func (ad *AddToCartPayload) Validate() error {
 	return validate.Struct(ad)
@@ -67,6 +71,10 @@ func (po *PlaceOrderPayload) Validate() error {
 
 func (sc *SetCurrencyPayload) Validate() error {
 	return validate.Struct(sc)
+}
+
+func (sc *SetCountryPayload) Validate() error {
+    return validate.Struct(sc)
 }
 
 // Reusable error response function.
