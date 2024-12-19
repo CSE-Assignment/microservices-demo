@@ -66,8 +66,8 @@
                 </a>
                 <div class="controls">
 
-                    {{ if $.show_currency }}
                     <div class="h-controls">
+                        {{ if $.show_currency }}
                         <div class="h-control">
                             <span class="icon currency-icon"> {{ renderCurrencyLogo $.user_currency}}</span>
                             <form method="POST" class="controls-form" action="{{ $.baseUrl }}/setCurrency" id="currency_form" >
@@ -79,8 +79,21 @@
                             </form>
                             <img src="{{ $.baseUrl }}/static/icons/Hipster_DownArrow.svg" alt="" class="icon arrow" />
                         </div>
+                        {{ end }}
+                        {{ if $.show_country }}
+                        <div class="h-control">
+                            <span class="icon currency-icon">🌍</span>
+                            <form method="POST" class="controls-form" action="{{ $.baseUrl }}/setCountry" id="country_form">
+                                <select name="country_code" onchange="document.getElementById('country_form').submit();">
+                                    {{ range $.countries }}
+                                    <option value="{{ . }}" {{ if eq . $.user_country }}selected="selected"{{ end }}>{{ . }}</option>
+                                    {{ end }}
+                                </select>
+                            </form>
+                            <img src="{{ $.baseUrl }}/static/icons/Hipster_DownArrow.svg" alt="" class="icon arrow" />
+                        </div>
+                        {{ end }}
                     </div>
-                    {{ end }}
 
                     {{ if $.assistant_enabled }}
                     <a href="{{ $.baseUrl }}/assistant" class="cart-link">
