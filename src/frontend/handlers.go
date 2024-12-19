@@ -125,6 +125,7 @@ func (fe *frontendServer) homeHandler(w http.ResponseWriter, r *http.Request) {
 		"banner_description":  bannerResp.GetDescription(),
 		"banner_image":        base64.StdEncoding.EncodeToString(bannerResp.GetImage()), // Base64 encode the image
 		"banner_image_format": bannerResp.GetImageFormat(),
+		"show_country":       true,
 	})); err != nil {
 		log.Error(err)
 	}
@@ -214,6 +215,7 @@ func (fe *frontendServer) productHandler(w http.ResponseWriter, r *http.Request)
 		"recommendations": recommendations,
 		"cart_size":       cartSize(cart),
 		"packagingInfo":   packagingInfo,
+		"show_country":    false,
 	})); err != nil {
 		log.Println(err)
 	}
@@ -323,6 +325,7 @@ func (fe *frontendServer) viewCartHandler(w http.ResponseWriter, r *http.Request
 		"total_cost":       totalPrice,
 		"items":            items,
 		"expiration_years": []int{year, year + 1, year + 2, year + 3, year + 4},
+		"show_country":     false,
 	})); err != nil {
 		log.Println(err)
 	}
@@ -406,6 +409,7 @@ func (fe *frontendServer) placeOrderHandler(w http.ResponseWriter, r *http.Reque
 		"order":           order.GetOrder(),
 		"total_paid":      &totalPaid,
 		"recommendations": recommendations,
+		"show_country":    false,
 	})); err != nil {
 		log.Println(err)
 	}
@@ -421,6 +425,7 @@ func (fe *frontendServer) assistantHandler(w http.ResponseWriter, r *http.Reques
 	if err := templates.ExecuteTemplate(w, "assistant", injectCommonTemplateData(r, map[string]interface{}{
 		"show_currency": false,
 		"currencies":    currencies,
+		"show_country":  false,
 	})); err != nil {
 		log.Println(err)
 	}
@@ -533,6 +538,32 @@ func (fe *frontendServer) setCurrencyHandler(w http.ResponseWriter, r *http.Requ
 	w.WriteHeader(http.StatusFound)
 }
 
+func (fe *frontendServer) setCountryHandler(w http.ResponseWriter, r *http.Request) {
+    log := r.Context().Value(ctxKeyLog{}).(logrus.FieldLogger)
+    country := r.FormValue("country_code")
+    payload := validator.SetCountryPayload{Country: country}
+    if err := payload.Validate(); err != nil {
+        renderHTTPError(log, r, w, validator.ValidationErrorResponse(err), http.StatusUnprocessableEntity)
+        return
+    }
+    log.WithField("country.new", payload.Country).WithField("country.old", currentCountry(r)).
+        Debug("setting country")
+
+    if payload.Country != "" {
+        http.SetCookie(w, &http.Cookie{
+            Name:   cookieCountry,
+            Value:  payload.Country,
+            MaxAge: cookieMaxAge,
+        })
+    }
+    referer := r.Header.Get("referer")
+    if referer == "" {
+        referer = baseUrl + "/"
+    }
+    w.Header().Set("Location", referer)
+    w.WriteHeader(http.StatusFound)
+}
+
 // chooseAd queries for advertisements available and randomly chooses one, if
 // available. It ignores the error retrieving the ad since it is not critical.
 func (fe *frontendServer) chooseAd(ctx context.Context, ctxKeys []string, log logrus.FieldLogger) *pb.Ad {
@@ -564,6 +595,7 @@ func injectCommonTemplateData(r *http.Request, payload map[string]interface{}) m
 		"session_id":        sessionID(r),
 		"request_id":        r.Context().Value(ctxKeyRequestID{}),
 		"user_currency":     currentCurrency(r),
+		"user_country":      currentCountry(r),
 		"platform_css":      plat.css,
 		"platform_name":     plat.provider,
 		"is_cymbal_brand":   isCymbalBrand,
@@ -572,6 +604,7 @@ func injectCommonTemplateData(r *http.Request, payload map[string]interface{}) m
 		"frontendMessage":   frontendMessage,
 		"currentYear":       time.Now().Year(),
 		"baseUrl":           baseUrl,
+		"countries":         []string{"US", "DE", "FR", "GB", "JP"},
 	}
 
 	for k, v := range payload {
@@ -587,6 +620,14 @@ func currentCurrency(r *http.Request) string {
 		return c.Value
 	}
 	return defaultCurrency
+}
+
+func currentCountry(r *http.Request) string {
+    c, _ := r.Cookie(cookieCountry)
+    if c != nil {
+        return c.Value
+    }
+    return defaultCountry
 }
 
 func sessionID(r *http.Request) string {
